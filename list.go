@@ -2,12 +2,15 @@ package tview
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/gdamore/tcell"
 )
 
 // ListItem represents one item in a List.
 type ListItem struct {
+	sync.RWMutex
+
 	id            string
 	MainText      string // The main text of the list item.
 	SecondaryText string // A secondary text to be shown underneath the main text.
@@ -183,6 +186,9 @@ func (l *List) Clear() *List {
 // Draw draws this primitive onto the screen.
 func (l *List) Draw(screen tcell.Screen) {
 	l.Box.Draw(screen)
+
+	l.RLock()
+	defer l.RUnlock()
 
 	// Determine the dimensions.
 	x, y, width, height := l.GetInnerRect()

@@ -84,6 +84,9 @@ func (f *Frame) SetBorders(top, bottom, header, footer, left, right int) *Frame 
 func (f *Frame) Draw(screen tcell.Screen) {
 	f.Box.Draw(screen)
 
+	f.RLock()
+	defer f.RUnlock()
+
 	// Calculate start positions.
 	x, top, width, height := f.GetInnerRect()
 	bottom := top + height - 1

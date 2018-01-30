@@ -137,6 +137,9 @@ func (c *Checkbox) Draw(screen tcell.Screen) {
 		return
 	}
 
+	c.RLock()
+	defer c.RUnlock()
+
 	// Draw label.
 	_, drawnWidth := Print(screen, c.label, x, y, rightLimit-x, AlignLeft, c.labelColor)
 	x += drawnWidth

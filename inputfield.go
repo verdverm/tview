@@ -67,7 +67,10 @@ func NewInputField() *InputField {
 
 // SetText sets the current text of the input field.
 func (i *InputField) SetText(text string) *InputField {
+	i.Lock()
 	i.text = text
+	i.Unlock()
+
 	if i.changed != nil {
 		i.changed(text)
 	}
@@ -76,40 +79,61 @@ func (i *InputField) SetText(text string) *InputField {
 
 // GetText returns the current text of the input field.
 func (i *InputField) GetText() string {
+	i.RLock()
+	defer i.RUnlock()
+
 	return i.text
 }
 
 // SetLabel sets the text to be displayed before the input area.
 func (i *InputField) SetLabel(label string) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.label = label
 	return i
 }
 
 // GetLabel returns the text to be displayed before the input area.
 func (i *InputField) GetLabel() string {
+	i.RLock()
+	defer i.RUnlock()
+
 	return i.label
 }
 
 // SetLabelColor sets the color of the label.
 func (i *InputField) SetLabelColor(color tcell.Color) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.labelColor = color
 	return i
 }
 
 // SetFieldBackgroundColor sets the background color of the input area.
 func (i *InputField) SetFieldBackgroundColor(color tcell.Color) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.fieldBackgroundColor = color
 	return i
 }
 
 // SetFieldTextColor sets the text color of the input area.
 func (i *InputField) SetFieldTextColor(color tcell.Color) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.fieldTextColor = color
 	return i
 }
 
 // SetFormAttributes sets attributes shared by all form items.
 func (i *InputField) SetFormAttributes(label string, labelColor, bgColor, fieldTextColor, fieldBgColor tcell.Color) FormItem {
+	i.Lock()
+	defer i.Unlock()
+
 	i.label = label
 	i.labelColor = labelColor
 	i.backgroundColor = bgColor
@@ -121,18 +145,27 @@ func (i *InputField) SetFormAttributes(label string, labelColor, bgColor, fieldT
 // SetFieldWidth sets the screen width of the input area. A value of 0 means
 // extend as much as possible.
 func (i *InputField) SetFieldWidth(width int) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.fieldWidth = width
 	return i
 }
 
 // GetFieldWidth returns this primitive's field width.
 func (i *InputField) GetFieldWidth() int {
+	i.RLock()
+	defer i.RUnlock()
+
 	return i.fieldWidth
 }
 
 // SetMaskCharacter sets a character that masks user input on a screen. A value
 // of 0 disables masking.
 func (i *InputField) SetMaskCharacter(mask rune) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.maskCharacter = mask
 	return i
 }
@@ -143,6 +176,9 @@ func (i *InputField) SetMaskCharacter(mask rune) *InputField {
 // This package defines a number of variables Prefixed with InputField which may
 // be used for common input (e.g. numbers, maximum text length).
 func (i *InputField) SetAcceptanceFunc(handler func(textToCheck string, lastChar rune) bool) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.accept = handler
 	return i
 }
@@ -150,6 +186,9 @@ func (i *InputField) SetAcceptanceFunc(handler func(textToCheck string, lastChar
 // SetChangedFunc sets a handler which is called whenever the text of the input
 // field has changed. It receives the current text (after the change).
 func (i *InputField) SetChangedFunc(handler func(text string)) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.changed = handler
 	return i
 }
@@ -163,6 +202,9 @@ func (i *InputField) SetChangedFunc(handler func(text string)) *InputField {
 //   - KeyTab: Move to the next field.
 //   - KeyBacktab: Move to the previous field.
 func (i *InputField) SetDoneFunc(handler func(key tcell.Key)) *InputField {
+	i.Lock()
+	defer i.Unlock()
+
 	i.done = handler
 	return i
 }
@@ -174,6 +216,9 @@ func (i *InputField) SetFinishedFunc(handler func(key tcell.Key)) FormItem {
 
 // Draw draws this primitive onto the screen.
 func (i *InputField) Draw(screen tcell.Screen) {
+	i.RLock()
+	defer i.RUnlock()
+
 	i.Box.Draw(screen)
 
 	// Prepare
@@ -244,6 +289,9 @@ func (i *InputField) Draw(screen tcell.Screen) {
 
 // setCursor sets the cursor position.
 func (i *InputField) setCursor(screen tcell.Screen) {
+	i.RLock()
+	defer i.RUnlock()
+
 	x := i.x
 	y := i.y
 	rightLimit := x + i.width
@@ -272,6 +320,8 @@ func (i *InputField) InputHandler() func(tcell.Event, func(Primitive)) {
 			currentText := i.text
 			defer func() {
 				if i.text != currentText && i.changed != nil {
+					//i.Lock()
+					//defer i.Unlock()
 					i.changed(i.text)
 				}
 			}()

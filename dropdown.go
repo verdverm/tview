@@ -200,6 +200,9 @@ func (d *DropDown) SetFinishedFunc(handler func(key tcell.Key)) FormItem {
 func (d *DropDown) Draw(screen tcell.Screen) {
 	d.Box.Draw(screen)
 
+	d.RLock()
+	defer d.RUnlock()
+
 	// Prepare.
 	x, y, width, height := d.GetInnerRect()
 	rightLimit := x + width

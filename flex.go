@@ -50,6 +50,9 @@ func NewFlex() *Flex {
 // SetDirection sets the direction in which the contained primitives are
 // distributed. This can be either FlexColumn (default) or FlexRow.
 func (f *Flex) SetDirection(direction int) *Flex {
+	//f.Lock()
+	//defer f.Unlock()
+
 	f.direction = direction
 	return f
 }
@@ -57,6 +60,9 @@ func (f *Flex) SetDirection(direction int) *Flex {
 // SetFullScreen sets the flag which, when true, causes the flex layout to use
 // the entire screen space instead of whatever size it is currently assigned to.
 func (f *Flex) SetFullScreen(fullScreen bool) *Flex {
+	//f.Lock()
+	//defer f.Unlock()
+
 	f.fullScreen = fullScreen
 	return f
 }
@@ -76,16 +82,26 @@ func (f *Flex) AddItem(item Primitive, fixedSize, proportion int, focus bool) *F
 	itm := FlexItem{Item: item, FixedSize: fixedSize, Proportion: proportion, Focus: focus}
 	return f.AddFlexItem(itm)
 }
+
 func (f *Flex) AddFlexItem(item FlexItem) *Flex {
+	//f.Lock()
+	//defer f.Unlock()
+
 	f.items = append(f.items, item)
 	return f
 }
 
 func (f *Flex) GetItems() []FlexItem {
+	//f.RLock()
+	//defer f.RUnlock()
+
 	return f.items
 }
 
 func (f *Flex) GetItem(idx int) FlexItem {
+	//f.RLock()
+	//defer f.RUnlock()
+
 	return f.items[idx]
 }
 
@@ -95,6 +111,9 @@ func (f *Flex) SetItem(idx int, item Primitive, fixedSize, proportion int, focus
 }
 
 func (f *Flex) SetFlexItem(idx int, item FlexItem) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	f.items[idx] = item
 }
 
@@ -104,12 +123,18 @@ func (f *Flex) InsItem(idx int, item Primitive, fixedSize, proportion int, focus
 }
 
 func (f *Flex) InsFlexItem(idx int, item FlexItem) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	f.items = append(f.items, FlexItem{})
 	copy(f.items[idx+1:], f.items[idx:])
 	f.items[idx] = item
 }
 
 func (f *Flex) DelItem(idx int) {
+	//f.Lock()
+	//defer f.Unlock()
+
 	copy(f.items[idx:], f.items[idx+1:])
 	f.items[len(f.items)-1] = FlexItem{}
 	f.items = f.items[:len(f.items)-1]
@@ -119,12 +144,17 @@ func (f *Flex) DelItem(idx int) {
 func (f *Flex) Draw(screen tcell.Screen) {
 	f.Box.Draw(screen)
 
+	//f.RLock()
+	//defer f.RUnlock()
+
 	// Calculate size and position of the items.
 
 	// Do we use the entire screen?
 	if f.fullScreen {
 		width, height := screen.Size()
+		// f.RUnlock()
 		f.SetRect(0, 0, width, height)
+		// f.RLock()
 	}
 
 	// How much space can we distribute?
@@ -171,6 +201,9 @@ func (f *Flex) Draw(screen tcell.Screen) {
 
 // Focus is called when this primitive receives focus.
 func (f *Flex) Focus(delegate func(p Primitive)) {
+	//f.RLock()
+	//defer f.RUnlock()
+
 	for _, item := range f.items {
 		if item.Focus {
 			delegate(item.Item)
@@ -181,6 +214,9 @@ func (f *Flex) Focus(delegate func(p Primitive)) {
 
 // HasFocus returns whether or not this primitive has focus.
 func (f *Flex) HasFocus() bool {
+	//f.RLock()
+	//defer f.RUnlock()
+
 	for _, item := range f.items {
 		if item.Item.GetFocusable().HasFocus() {
 			return true

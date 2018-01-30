@@ -256,6 +256,9 @@ func (f *Form) SetCancelFunc(callback func()) *Form {
 func (f *Form) Draw(screen tcell.Screen) {
 	f.Box.Draw(screen)
 
+	f.RLock()
+	defer f.RUnlock()
+
 	// Determine the dimensions.
 	x, y, width, height := f.GetInnerRect()
 	bottomLimit := y + height

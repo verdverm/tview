@@ -627,9 +627,10 @@ func (t *TextView) reindexBuffer(width int) {
 
 // Draw draws this primitive onto the screen.
 func (t *TextView) Draw(screen tcell.Screen) {
-	t.Lock()
-	defer t.Unlock()
 	t.Box.Draw(screen)
+
+	t.RLock()
+	defer t.RUnlock()
 
 	// Get the available size.
 	x, y, width, height := t.GetInnerRect()

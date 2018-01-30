@@ -47,11 +47,17 @@ func NewApplication() *Application {
 // itself: Such a handler can intercept the Ctrl-C event which closes the
 // applicatoon.
 func (a *Application) SetInputCapture(capture func(event tcell.Event) tcell.Event) *Application {
+	a.Lock()
+	defer a.Unlock()
+
 	a.inputCapture = capture
 	return a
 }
 
 func (a *Application) Screen() tcell.Screen {
+	// a.RLock()
+	// defer a.RUnlock()
+
 	return a.screen
 }
 
@@ -59,19 +65,19 @@ func (a *Application) Screen() tcell.Screen {
 // when Stop() was called.
 func (a *Application) Run() error {
 	var err error
-	a.Lock()
+	// a.Lock()
 
 	// Make a screen.
 	a.screen, err = tcell.NewScreen()
 	if err != nil {
-		a.Unlock()
+		// a.Unlock()
 		return err
 	}
 	if err = a.screen.Init(); err != nil {
-		a.Unlock()
+		// a.Unlock()
 		return err
 	}
-	a.Unlock()
+	// a.Unlock()
 
 	// We catch panics to clean up because they mess up the terminal.
 	defer func() {
@@ -88,6 +94,7 @@ func (a *Application) Run() error {
 
 	// Start event loop.
 	for {
+
 		a.RLock()
 		screen := a.screen
 		a.RUnlock()
@@ -96,29 +103,30 @@ func (a *Application) Run() error {
 		}
 
 		// Wait for next event.
-		event := a.screen.PollEvent()
+		event := screen.PollEvent()
 		if event == nil {
+			a.Stop()
 			break // The screen was finalized.
 		}
 
+		a.RLock()
+		ic := a.inputCapture
+		a.RUnlock()
 		// Intercept all events.
-		if a.inputCapture != nil {
-			event = a.inputCapture(event)
+		if ic != nil {
+			event = ic(event)
 			if event == nil {
 				break // Don't forward event.
 			}
 		}
 
-		switch evt := event.(type) {
+		// switch evt := event.(type) {
+		switch event.(type) {
 		case *tcell.EventKey:
-			a.RLock()
-			p := a.focus
-			a.RUnlock()
 
-			// Ctrl-C closes the application.
-			if evt.Key() == tcell.KeyCtrlC {
-				a.Stop()
-			}
+			// a.RLock()
+			p := a.focus
+			// a.RUnlock()
 
 			// Pass other key events to the currently focused primitive.
 			if p != nil {
@@ -129,15 +137,16 @@ func (a *Application) Run() error {
 					a.Draw()
 				}
 			}
+
 		case *tcell.EventResize:
-			a.Lock()
+			// a.Lock()
 			screen := a.screen
 			if a.rootAutoSize && a.root != nil {
 				width, height := screen.Size()
 				a.root.SetRect(0, 0, width, height)
 			}
-			a.Unlock()
 			screen.Clear()
+			// a.Unlock()
 			a.Draw()
 		}
 	}
@@ -160,8 +169,8 @@ func (a *Application) Stop() error {
 // Draw refreshes the screen. It calls the Draw() function of the application's
 // root primitive and then syncs the screen buffer.
 func (a *Application) Draw() *Application {
-	a.RLock()
-	defer a.RUnlock()
+	a.Lock()
+	defer a.Unlock()
 
 	// Maybe we're not ready yet or not anymore.
 	if a.screen == nil || a.root == nil {
@@ -189,13 +198,16 @@ func (a *Application) Draw() *Application {
 // It also calls SetFocus() on the primitive.
 func (a *Application) SetRoot(root Primitive, autoSize bool) *Application {
 
-	a.Lock()
+	// a.Lock()
 	a.root = root
 	a.rootAutoSize = autoSize
+	// a.Unlock()
+
+	// a.RLock()
 	if a.screen != nil {
 		a.screen.Clear()
 	}
-	a.Unlock()
+	// a.RUnlock()
 
 	a.SetFocus(root)
 
@@ -219,15 +231,24 @@ func (a *Application) ResizeToFullScreen(p Primitive) *Application {
 // Blur() will be called on the previously focused primitive. Focus() will be
 // called on the new primitive.
 func (a *Application) SetFocus(p Primitive) *Application {
-	a.Lock()
-	if a.focus != nil {
-		a.focus.Blur()
+	// a.RLock()
+	f := a.focus
+	// a.RUnlock()
+
+	if f != nil {
+		f.Blur()
 	}
+
+	// a.Lock()
 	a.focus = p
+	// a.Unlock()
+
+	// a.RLock()
 	if a.screen != nil {
 		a.screen.HideCursor()
 	}
-	a.Unlock()
+	// a.RUnlock()
+
 	p.Focus(func(p Primitive) {
 		a.SetFocus(p)
 	})
@@ -240,5 +261,6 @@ func (a *Application) SetFocus(p Primitive) *Application {
 func (a *Application) GetFocus() Primitive {
 	a.RLock()
 	defer a.RUnlock()
+
 	return a.focus
 }
