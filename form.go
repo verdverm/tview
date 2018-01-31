@@ -193,11 +193,11 @@ func (f *Form) AddPasswordField(label, value string, fieldWidth int, mask rune, 
 // AddDropDown adds a drop-down element to the form. It has a label, options,
 // and an (optional) callback function which is invoked when an option was
 // selected.
-func (f *Form) AddDropDown(label string, options []string, initialOption int, selected func(option string, optionIndex int)) *Form {
+func (f *Form) AddDropDown(label string, options []string, values []interface{}, initialOption int, selected func(option string, optionValue interface{}, optionIndex int)) *Form {
 	f.items = append(f.items, NewDropDown().
 		SetLabel(label).
 		SetCurrentOption(initialOption).
-		SetOptions(options, selected))
+		SetOptions(options, values, selected))
 	return f
 }
 
@@ -255,6 +255,9 @@ func (f *Form) SetCancelFunc(callback func()) *Form {
 // Draw draws this primitive onto the screen.
 func (f *Form) Draw(screen tcell.Screen) {
 	f.Box.Draw(screen)
+
+	f.RLock()
+	defer f.RUnlock()
 
 	// Determine the dimensions.
 	x, y, width, height := f.GetInnerRect()

@@ -98,6 +98,9 @@ func (m *Modal) HasFocus() bool {
 
 // Draw draws this primitive onto the screen.
 func (m *Modal) Draw(screen tcell.Screen) {
+	m.Lock()
+	defer m.Unlock()
+
 	// Calculate the width of this modal.
 	buttonsWidth := 0
 	for _, button := range m.form.buttons {
@@ -123,7 +126,9 @@ func (m *Modal) Draw(screen tcell.Screen) {
 	width += 4
 	x := (screenWidth - width) / 2
 	y := (screenHeight - height) / 2
+	m.Unlock()
 	m.SetRect(x, y, width, height)
+	m.Lock()
 
 	// Draw the frame.
 	m.frame.SetRect(x, y, width, height)

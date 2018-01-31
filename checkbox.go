@@ -46,6 +46,12 @@ func NewCheckbox() *Checkbox {
 	}
 }
 
+func (c *Checkbox) GetValues() map[string]interface{} {
+	return map[string]interface{}{
+		c.name: c.checked,
+	}
+}
+
 // SetChecked sets the state of the checkbox.
 func (c *Checkbox) SetChecked(checked bool) *Checkbox {
 	c.checked = checked
@@ -137,6 +143,9 @@ func (c *Checkbox) Draw(screen tcell.Screen) {
 		return
 	}
 
+	c.RLock()
+	defer c.RUnlock()
+
 	// Draw label.
 	_, drawnWidth := Print(screen, c.label, x, y, rightLimit-x, AlignLeft, c.labelColor)
 	x += drawnWidth
@@ -154,21 +163,24 @@ func (c *Checkbox) Draw(screen tcell.Screen) {
 }
 
 // InputHandler returns the handler for this primitive.
-func (c *Checkbox) InputHandler() func(event *tcell.EventKey, setFocus func(p Primitive)) {
-	return c.wrapInputHandler(func(event *tcell.EventKey, setFocus func(p Primitive)) {
-		// Process key event.
-		switch key := event.Key(); key {
-		case tcell.KeyRune, tcell.KeyEnter: // Check.
-			if key == tcell.KeyRune && event.Rune() != ' ' {
-				break
-			}
-			c.checked = !c.checked
-			if c.changed != nil {
-				c.changed(c.checked)
-			}
-		case tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEscape: // We're done.
-			if c.done != nil {
-				c.done(key)
+func (c *Checkbox) InputHandler() func(tcell.Event, func(Primitive)) {
+	return c.wrapInputHandler(func(event tcell.Event, setFocus func(p Primitive)) {
+		switch evt := event.(type) {
+		case *tcell.EventKey:
+			// Process key event.
+			switch key := evt.Key(); key {
+			case tcell.KeyRune, tcell.KeyEnter: // Check.
+				if key == tcell.KeyRune && evt.Rune() != ' ' {
+					break
+				}
+				c.checked = !c.checked
+				if c.changed != nil {
+					c.changed(c.checked)
+				}
+			case tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEscape: // We're done.
+				if c.done != nil {
+					c.done(key)
+				}
 			}
 		}
 	})

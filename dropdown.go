@@ -5,9 +5,10 @@ import (
 )
 
 // dropDownOption is one option that can be selected in a drop-down primitive.
-type dropDownOption struct {
-	Text     string // The text to be displayed in the drop-down.
-	Selected func() // The (optional) callback for when this option was selected.
+type DropDownOption struct {
+	Text     string      // The text to be displayed in the drop-down.
+	Value    interface{} // The value associated with this item, passed on submit
+	Selected func()      // The (optional) callback for when this option was selected.
 }
 
 // DropDown is a one-line box (three lines if there is a title) where the
@@ -18,7 +19,7 @@ type DropDown struct {
 	*Box
 
 	// The options from which the user can choose.
-	options []*dropDownOption
+	options []*DropDownOption
 
 	// The index of the currently selected option. Negative if no option is
 	// currently selected.
@@ -74,6 +75,13 @@ func NewDropDown() *DropDown {
 	return d
 }
 
+func (d *DropDown) GetValues() map[string]interface{} {
+	_, c := d.GetCurrentOption()
+	return map[string]interface{}{
+		d.name: c.Value,
+	}
+}
+
 // SetCurrentOption sets the index of the currently selected option.
 func (d *DropDown) SetCurrentOption(index int) *DropDown {
 	d.currentOption = index
@@ -83,12 +91,12 @@ func (d *DropDown) SetCurrentOption(index int) *DropDown {
 
 // GetCurrentOption returns the index of the currently selected option as well
 // as its text. If no option was selected, -1 and an empty string is returned.
-func (d *DropDown) GetCurrentOption() (int, string) {
-	var text string
+func (d *DropDown) GetCurrentOption() (int, *DropDownOption) {
+	var opt *DropDownOption
 	if d.currentOption >= 0 && d.currentOption < len(d.options) {
-		text = d.options[d.currentOption].Text
+		opt = d.options[d.currentOption]
 	}
-	return d.currentOption, text
+	return d.currentOption, opt
 }
 
 // SetLabel sets the text to be displayed before the input area.
@@ -154,8 +162,8 @@ func (d *DropDown) GetFieldWidth() int {
 
 // AddOption adds a new selectable option to this drop-down. The "selected"
 // callback is called when this option was selected. It may be nil.
-func (d *DropDown) AddOption(text string, selected func()) *DropDown {
-	d.options = append(d.options, &dropDownOption{Text: text, Selected: selected})
+func (d *DropDown) AddOption(text string, value interface{}, selected func()) *DropDown {
+	d.options = append(d.options, &DropDownOption{Text: text, Value: value, Selected: selected})
 	d.list.AddItem(text, "", 0, selected)
 	return d
 }
@@ -164,17 +172,17 @@ func (d *DropDown) AddOption(text string, selected func()) *DropDown {
 // one callback function which is called when one of the options is selected.
 // It will be called with the option's text and its index into the options
 // slice. The "selected" parameter may be nil.
-func (d *DropDown) SetOptions(texts []string, selected func(text string, index int)) *DropDown {
+func (d *DropDown) SetOptions(texts []string, values []interface{}, selected func(text string, value interface{}, index int)) *DropDown {
 	d.list.Clear()
 	d.options = nil
 	for index, text := range texts {
-		func(t string, i int) {
-			d.AddOption(text, func() {
+		func(t string, v interface{}, i int) {
+			d.AddOption(t, v, func() {
 				if selected != nil {
-					selected(t, i)
+					selected(t, v, i)
 				}
 			})
-		}(text, index)
+		}(text, values[index], index)
 	}
 	return d
 }
@@ -199,6 +207,9 @@ func (d *DropDown) SetFinishedFunc(handler func(key tcell.Key)) FormItem {
 // Draw draws this primitive onto the screen.
 func (d *DropDown) Draw(screen tcell.Screen) {
 	d.Box.Draw(screen)
+
+	d.RLock()
+	defer d.RUnlock()
 
 	// Prepare.
 	x, y, width, height := d.GetInnerRect()
@@ -262,30 +273,34 @@ func (d *DropDown) Draw(screen tcell.Screen) {
 }
 
 // InputHandler returns the handler for this primitive.
-func (d *DropDown) InputHandler() func(event *tcell.EventKey, setFocus func(p Primitive)) {
-	return d.wrapInputHandler(func(event *tcell.EventKey, setFocus func(p Primitive)) {
-		// Process key event.
-		switch key := event.Key(); key {
-		case tcell.KeyEnter, tcell.KeyRune, tcell.KeyDown:
-			if key == tcell.KeyRune && event.Rune() != ' ' {
-				break
-			}
-			d.open = true
-			d.list.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-				// An option was selected. Close the list again.
-				d.open = false
-				setFocus(d)
-				d.currentOption = index
+func (d *DropDown) InputHandler() func(tcell.Event, func(Primitive)) {
+	return d.wrapInputHandler(func(event tcell.Event, setFocus func(p Primitive)) {
+		switch evt := event.(type) {
 
-				// Trigger "selected" event.
-				if d.options[d.currentOption].Selected != nil {
-					d.options[d.currentOption].Selected()
+		// Process key event.
+		case *tcell.EventKey:
+			switch key := evt.Key(); key {
+			case tcell.KeyEnter, tcell.KeyRune, tcell.KeyDown:
+				if key == tcell.KeyRune && evt.Rune() != ' ' {
+					break
 				}
-			})
-			setFocus(d.list)
-		case tcell.KeyEscape, tcell.KeyTab, tcell.KeyBacktab:
-			if d.done != nil {
-				d.done(key)
+				d.open = true
+				d.list.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+					// An option was selected. Close the list again.
+					d.open = false
+					setFocus(d)
+					d.currentOption = index
+
+					// Trigger "selected" event.
+					if d.options[d.currentOption].Selected != nil {
+						d.options[d.currentOption].Selected()
+					}
+				})
+				setFocus(d.list)
+			case tcell.KeyEscape, tcell.KeyTab, tcell.KeyBacktab:
+				if d.done != nil {
+					d.done(key)
+				}
 			}
 		}
 	})

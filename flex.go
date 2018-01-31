@@ -11,7 +11,7 @@ const (
 )
 
 // flexItem holds layout options for one item.
-type flexItem struct {
+type FlexItem struct {
 	Item       Primitive // The item to be positioned.
 	FixedSize  int       // The item's fixed size which may not be changed, 0 if it has no fixed size.
 	Proportion int       // The item's proportion.
@@ -25,7 +25,7 @@ type Flex struct {
 	*Box
 
 	// The items to be positioned.
-	items []flexItem
+	items []FlexItem
 
 	// FlexRow or FlexColumn.
 	direction int
@@ -47,9 +47,21 @@ func NewFlex() *Flex {
 	return f
 }
 
+// GetDirection gets the direction in which the contained primitives are
+// distributed. This can be either FlexColumn (default) or FlexRow.
+func (f *Flex) GetDirection() int {
+	//f.Lock()
+	//defer f.Unlock()
+
+	return f.direction
+}
+
 // SetDirection sets the direction in which the contained primitives are
 // distributed. This can be either FlexColumn (default) or FlexRow.
 func (f *Flex) SetDirection(direction int) *Flex {
+	//f.Lock()
+	//defer f.Unlock()
+
 	f.direction = direction
 	return f
 }
@@ -57,6 +69,9 @@ func (f *Flex) SetDirection(direction int) *Flex {
 // SetFullScreen sets the flag which, when true, causes the flex layout to use
 // the entire screen space instead of whatever size it is currently assigned to.
 func (f *Flex) SetFullScreen(fullScreen bool) *Flex {
+	//f.Lock()
+	//defer f.Unlock()
+
 	f.fullScreen = fullScreen
 	return f
 }
@@ -73,20 +88,82 @@ func (f *Flex) SetFullScreen(fullScreen bool) *Flex {
 // primitive receives focus. If multiple items have the "focus" flag set to
 // true, the first one will receive focus.
 func (f *Flex) AddItem(item Primitive, fixedSize, proportion int, focus bool) *Flex {
-	f.items = append(f.items, flexItem{Item: item, FixedSize: fixedSize, Proportion: proportion, Focus: focus})
+	itm := FlexItem{Item: item, FixedSize: fixedSize, Proportion: proportion, Focus: focus}
+	return f.AddFlexItem(itm)
+}
+
+func (f *Flex) AddFlexItem(item FlexItem) *Flex {
+	//f.Lock()
+	//defer f.Unlock()
+
+	f.items = append(f.items, item)
 	return f
+}
+
+func (f *Flex) GetItems() []FlexItem {
+	//f.RLock()
+	//defer f.RUnlock()
+
+	return f.items
+}
+
+func (f *Flex) GetItem(idx int) FlexItem {
+	//f.RLock()
+	//defer f.RUnlock()
+
+	return f.items[idx]
+}
+
+func (f *Flex) SetItem(idx int, item Primitive, fixedSize, proportion int, focus bool) {
+	itm := FlexItem{Item: item, FixedSize: fixedSize, Proportion: proportion, Focus: focus}
+	f.SetFlexItem(idx, itm)
+}
+
+func (f *Flex) SetFlexItem(idx int, item FlexItem) {
+	//f.Lock()
+	//defer f.Unlock()
+
+	f.items[idx] = item
+}
+
+func (f *Flex) InsItem(idx int, item Primitive, fixedSize, proportion int, focus bool) {
+	itm := FlexItem{Item: item, FixedSize: fixedSize, Proportion: proportion, Focus: focus}
+	f.InsFlexItem(idx, itm)
+}
+
+func (f *Flex) InsFlexItem(idx int, item FlexItem) {
+	//f.Lock()
+	//defer f.Unlock()
+
+	f.items = append(f.items, FlexItem{})
+	copy(f.items[idx+1:], f.items[idx:])
+	f.items[idx] = item
+}
+
+func (f *Flex) DelItem(idx int) {
+	//f.Lock()
+	//defer f.Unlock()
+
+	copy(f.items[idx:], f.items[idx+1:])
+	f.items[len(f.items)-1] = FlexItem{}
+	f.items = f.items[:len(f.items)-1]
 }
 
 // Draw draws this primitive onto the screen.
 func (f *Flex) Draw(screen tcell.Screen) {
 	f.Box.Draw(screen)
 
+	//f.RLock()
+	//defer f.RUnlock()
+
 	// Calculate size and position of the items.
 
 	// Do we use the entire screen?
 	if f.fullScreen {
 		width, height := screen.Size()
+		// f.RUnlock()
 		f.SetRect(0, 0, width, height)
+		// f.RLock()
 	}
 
 	// How much space can we distribute?
@@ -133,6 +210,9 @@ func (f *Flex) Draw(screen tcell.Screen) {
 
 // Focus is called when this primitive receives focus.
 func (f *Flex) Focus(delegate func(p Primitive)) {
+	//f.RLock()
+	//defer f.RUnlock()
+
 	for _, item := range f.items {
 		if item.Focus {
 			delegate(item.Item)
@@ -143,6 +223,9 @@ func (f *Flex) Focus(delegate func(p Primitive)) {
 
 // HasFocus returns whether or not this primitive has focus.
 func (f *Flex) HasFocus() bool {
+	//f.RLock()
+	//defer f.RUnlock()
+
 	for _, item := range f.items {
 		if item.Item.GetFocusable().HasFocus() {
 			return true

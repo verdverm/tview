@@ -10,6 +10,8 @@ import (
 type Button struct {
 	*Box
 
+	name string
+
 	// The text to be displayed before the input area.
 	label string
 
@@ -21,6 +23,9 @@ type Button struct {
 
 	// The background color when the button is in focus.
 	backgroundColorActivated tcell.Color
+
+	// An optional function which is called when the button was selected.
+	onSubmit func(values map[string]interface{}) (errors map[string]error)
 
 	// An optional function which is called when the button was selected.
 	selected func()
@@ -40,6 +45,20 @@ func NewButton(label string) *Button {
 		labelColor:               Styles.PrimaryTextColor,
 		labelColorActivated:      Styles.InverseTextColor,
 		backgroundColorActivated: Styles.PrimaryTextColor,
+	}
+}
+
+func (b *Button) Name() string {
+	return b.name
+}
+
+func (b *Button) SetName(name string) {
+	b.name = name
+}
+
+func (b *Button) OnSubmit() {
+	if b.selected != nil {
+		b.selected()
 	}
 }
 
@@ -71,6 +90,12 @@ func (b *Button) SetLabelColorActivated(color tcell.Color) *Button {
 // the button is in focus.
 func (b *Button) SetBackgroundColorActivated(color tcell.Color) *Button {
 	b.backgroundColorActivated = color
+	return b
+}
+
+// SetSelectedFunc sets a handler which is called when the button was selected.
+func (b *Button) SetOnSubmitFunction(handler func()) *Button {
+	b.selected = handler
 	return b
 }
 
@@ -120,17 +145,21 @@ func (b *Button) Draw(screen tcell.Screen) {
 }
 
 // InputHandler returns the handler for this primitive.
-func (b *Button) InputHandler() func(event *tcell.EventKey, setFocus func(p Primitive)) {
-	return b.wrapInputHandler(func(event *tcell.EventKey, setFocus func(p Primitive)) {
-		// Process key event.
-		switch key := event.Key(); key {
-		case tcell.KeyEnter: // Selected.
-			if b.selected != nil {
-				b.selected()
-			}
-		case tcell.KeyBacktab, tcell.KeyTab, tcell.KeyEscape: // Leave. No action.
-			if b.blur != nil {
-				b.blur(key)
+func (b *Button) InputHandler() func(tcell.Event, func(Primitive)) {
+	return b.wrapInputHandler(func(event tcell.Event, setFocus func(p Primitive)) {
+
+		switch evt := event.(type) {
+		case *tcell.EventKey:
+			// Process key event.
+			switch key := evt.Key(); key {
+			case tcell.KeyEnter: // Selected.
+				if b.selected != nil {
+					b.selected()
+				}
+			case tcell.KeyBacktab, tcell.KeyTab, tcell.KeyEscape: // Leave. No action.
+				if b.blur != nil {
+					b.blur(key)
+				}
 			}
 		}
 	})
