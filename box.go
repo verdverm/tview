@@ -21,6 +21,9 @@ type Box struct {
 	// A (hopefully) unique ID
 	id string
 
+	// A name for human-readable usage, when needed
+	name string
+
 	// props is a generic properties store
 	props map[string]interface{}
 
@@ -82,6 +85,14 @@ func NewBox() *Box {
 
 func (b *Box) Id() string {
 	return b.id
+}
+
+func (b *Box) Name() string {
+	return b.name
+}
+
+func (b *Box) SetName(name string) {
+	b.name = name
 }
 
 // SetBorderPadding sets the size of the borders around the box content.

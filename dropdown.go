@@ -5,9 +5,10 @@ import (
 )
 
 // dropDownOption is one option that can be selected in a drop-down primitive.
-type dropDownOption struct {
-	Text     string // The text to be displayed in the drop-down.
-	Selected func() // The (optional) callback for when this option was selected.
+type DropDownOption struct {
+	Text     string      // The text to be displayed in the drop-down.
+	Value    interface{} // The value associated with this item, passed on submit
+	Selected func()      // The (optional) callback for when this option was selected.
 }
 
 // DropDown is a one-line box (three lines if there is a title) where the
@@ -18,7 +19,7 @@ type DropDown struct {
 	*Box
 
 	// The options from which the user can choose.
-	options []*dropDownOption
+	options []*DropDownOption
 
 	// The index of the currently selected option. Negative if no option is
 	// currently selected.
@@ -74,6 +75,13 @@ func NewDropDown() *DropDown {
 	return d
 }
 
+func (d *DropDown) GetValues() map[string]interface{} {
+	_, c := d.GetCurrentOption()
+	return map[string]interface{}{
+		d.name: c.Value,
+	}
+}
+
 // SetCurrentOption sets the index of the currently selected option.
 func (d *DropDown) SetCurrentOption(index int) *DropDown {
 	d.currentOption = index
@@ -83,12 +91,12 @@ func (d *DropDown) SetCurrentOption(index int) *DropDown {
 
 // GetCurrentOption returns the index of the currently selected option as well
 // as its text. If no option was selected, -1 and an empty string is returned.
-func (d *DropDown) GetCurrentOption() (int, string) {
-	var text string
+func (d *DropDown) GetCurrentOption() (int, *DropDownOption) {
+	var opt *DropDownOption
 	if d.currentOption >= 0 && d.currentOption < len(d.options) {
-		text = d.options[d.currentOption].Text
+		opt = d.options[d.currentOption]
 	}
-	return d.currentOption, text
+	return d.currentOption, opt
 }
 
 // SetLabel sets the text to be displayed before the input area.
@@ -154,8 +162,8 @@ func (d *DropDown) GetFieldWidth() int {
 
 // AddOption adds a new selectable option to this drop-down. The "selected"
 // callback is called when this option was selected. It may be nil.
-func (d *DropDown) AddOption(text string, selected func()) *DropDown {
-	d.options = append(d.options, &dropDownOption{Text: text, Selected: selected})
+func (d *DropDown) AddOption(text string, value interface{}, selected func()) *DropDown {
+	d.options = append(d.options, &DropDownOption{Text: text, Value: value, Selected: selected})
 	d.list.AddItem(text, "", 0, selected)
 	return d
 }
@@ -164,17 +172,17 @@ func (d *DropDown) AddOption(text string, selected func()) *DropDown {
 // one callback function which is called when one of the options is selected.
 // It will be called with the option's text and its index into the options
 // slice. The "selected" parameter may be nil.
-func (d *DropDown) SetOptions(texts []string, selected func(text string, index int)) *DropDown {
+func (d *DropDown) SetOptions(texts []string, values []interface{}, selected func(text string, value interface{}, index int)) *DropDown {
 	d.list.Clear()
 	d.options = nil
 	for index, text := range texts {
-		func(t string, i int) {
-			d.AddOption(text, func() {
+		func(t string, v interface{}, i int) {
+			d.AddOption(t, v, func() {
 				if selected != nil {
-					selected(t, i)
+					selected(t, v, i)
 				}
 			})
-		}(text, index)
+		}(text, values[index], index)
 	}
 	return d
 }

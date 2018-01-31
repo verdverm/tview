@@ -46,6 +46,12 @@ func NewCheckbox() *Checkbox {
 	}
 }
 
+func (c *Checkbox) GetValues() map[string]interface{} {
+	return map[string]interface{}{
+		c.name: c.checked,
+	}
+}
+
 // SetChecked sets the state of the checkbox.
 func (c *Checkbox) SetChecked(checked bool) *Checkbox {
 	c.checked = checked

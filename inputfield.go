@@ -65,6 +65,12 @@ func NewInputField() *InputField {
 	}
 }
 
+func (i *InputField) GetValues() map[string]interface{} {
+	return map[string]interface{}{
+		i.name: i.text,
+	}
+}
+
 // SetText sets the current text of the input field.
 func (i *InputField) SetText(text string) *InputField {
 	i.Lock()
