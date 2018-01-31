@@ -82,6 +82,22 @@ func (d *DropDown) GetValues() map[string]interface{} {
 	}
 }
 
+func (d *DropDown) SetValues(values map[string]interface{}) {
+	list := NewList().ShowSecondaryText(false)
+	list.SetMainTextColor(Styles.PrimitiveBackgroundColor).
+		SetSelectedTextColor(Styles.PrimitiveBackgroundColor).
+		SetSelectedBackgroundColor(Styles.PrimaryTextColor).
+		SetBackgroundColor(Styles.MoreContrastBackgroundColor)
+
+	d.list = list
+
+	d.options = []*DropDownOption{}
+	for k, v := range values {
+		d.AddOption(k, v, nil)
+	}
+
+}
+
 // SetCurrentOption sets the index of the currently selected option.
 func (d *DropDown) SetCurrentOption(index int) *DropDown {
 	d.currentOption = index
@@ -295,6 +311,10 @@ func (d *DropDown) InputHandler() func(tcell.Event, func(Primitive)) {
 					if d.options[d.currentOption].Selected != nil {
 						d.options[d.currentOption].Selected()
 					}
+				})
+				d.list.SetDoneFunc(func() {
+					d.open = false
+					setFocus(d)
 				})
 				setFocus(d.list)
 			case tcell.KeyEscape, tcell.KeyTab, tcell.KeyBacktab:
