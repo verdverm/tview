@@ -8,14 +8,14 @@
   revision = "b23993cbb6353f0e6aa98d0ee318a34728f628b9"
 
 [[projects]]
+  branch = "master"
   name = "github.com/gdamore/tcell"
   packages = [
     ".",
     "terminfo"
   ]
-  revision = "061d51a604c546b48e92253cb65190d76cecf4c6"
+  revision = "1ea54695c04e18b1983250637a79cf9af0d2909c"
   source = "github.com/verdverm/tcell"
-  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/google/uuid"
@@ -36,6 +36,12 @@
   version = "v0.0.2"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = [
@@ -50,6 +56,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cf1f479fa84cf0c46e54e9a94164b00b788f78ae5a24335b5311eefe8cf91267"
+  inputs-digest = "5c9a90a48cb98bdef3a546e959b712f71542e3445e8cf3be3efcc4003cfb56fa"
   solver-name = "gps-cdcl"
   solver-version = 1
