@@ -3,6 +3,7 @@ package tview
 import (
 	"bytes"
 	"regexp"
+	"strings"
 	"sync"
 	"unicode/utf8"
 
@@ -168,6 +169,10 @@ func NewTextView() *TextView {
 		textColor:     Styles.PrimaryTextColor,
 		dynamicColors: false,
 	}
+}
+
+func (t *TextView) GetText() string {
+	return strings.Join(t.buffer, "")
 }
 
 // SetScrollable sets the flag that decides whether or not the text view is

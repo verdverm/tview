@@ -149,6 +149,39 @@ func (f *Flex) DelItem(idx int) {
 	f.items = f.items[:len(f.items)-1]
 }
 
+func (f *Flex) Mount(context map[string]interface{}) error {
+	for _, item := range f.items {
+		err := item.Item.Mount(context)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (f *Flex) Refresh(context map[string]interface{}) error {
+	for _, item := range f.items {
+		err := item.Item.Refresh(context)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (f *Flex) Unmount() error {
+	for _, item := range f.items {
+		err := item.Item.Unmount()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Draw draws this primitive onto the screen.
 func (f *Flex) Draw(screen tcell.Screen) {
 	f.Box.Draw(screen)

@@ -90,7 +90,9 @@ func (a *Application) Run() error {
 	}()
 
 	// Draw the screen for the first time.
+
 	a.Draw()
+	a.SetFocus(a.root)
 
 	// Start event loop.
 	for {

@@ -56,12 +56,6 @@ func (b *Button) SetName(name string) {
 	b.name = name
 }
 
-func (b *Button) OnSubmit() {
-	if b.selected != nil {
-		b.selected()
-	}
-}
-
 // SetLabel sets the button text.
 func (b *Button) SetLabel(label string) *Button {
 	b.label = label
@@ -93,6 +87,12 @@ func (b *Button) SetBackgroundColorActivated(color tcell.Color) *Button {
 	return b
 }
 
+func (b *Button) OnSubmit() {
+	if b.selected != nil {
+		b.selected()
+	}
+}
+
 // SetSelectedFunc sets a handler which is called when the button was selected.
 func (b *Button) SetOnSubmitFunction(handler func()) *Button {
 	b.selected = handler
@@ -115,6 +115,10 @@ func (b *Button) SetSelectedFunc(handler func()) *Button {
 func (b *Button) SetBlurFunc(handler func(key tcell.Key)) *Button {
 	b.blur = handler
 	return b
+}
+
+func (b *Button) SetBlurFunction(handler func(key tcell.Key)) {
+	b.blur = handler
 }
 
 // Draw draws this primitive onto the screen.

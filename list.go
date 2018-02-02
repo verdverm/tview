@@ -268,6 +268,9 @@ func (l *List) InputHandler() func(tcell.Event, func(Primitive)) {
 			case tcell.KeyPgUp:
 				l.currentItem -= 5
 			case tcell.KeyEnter:
+				if l.currentItem < 0 || l.currentItem >= len(l.items) {
+					return
+				}
 				item := l.items[l.currentItem]
 				if item.Selected != nil {
 					item.Selected()
