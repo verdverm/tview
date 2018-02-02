@@ -219,6 +219,9 @@ func (i *InputField) SetDoneFunc(handler func(key tcell.Key)) *InputField {
 func (i *InputField) SetFinishedFunc(handler func(key tcell.Key)) FormItem {
 	return i.SetDoneFunc(handler)
 }
+func (i *InputField) SetFinishedFunction(handler func(key tcell.Key)) {
+	i.SetDoneFunc(handler)
+}
 
 // Draw draws this primitive onto the screen.
 func (i *InputField) Draw(screen tcell.Screen) {

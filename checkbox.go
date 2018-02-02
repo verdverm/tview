@@ -132,6 +132,11 @@ func (c *Checkbox) SetFinishedFunc(handler func(key tcell.Key)) FormItem {
 	return c.SetDoneFunc(handler)
 }
 
+// SetFinishedFunc calls SetDoneFunc().
+func (c *Checkbox) SetFinishedFunction(handler func(key tcell.Key)) {
+	c.SetDoneFunc(handler)
+}
+
 // Draw draws this primitive onto the screen.
 func (c *Checkbox) Draw(screen tcell.Screen) {
 	c.Box.Draw(screen)
