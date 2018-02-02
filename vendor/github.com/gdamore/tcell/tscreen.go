@@ -382,9 +382,11 @@ outer:
 	}
 }
 
-func (t *tScreen) Fini() {
-	ti := t.ti
+func (t *tScreen) Fini() error {
 	t.Lock()
+	defer t.Unlock()
+
+	ti := t.ti
 	t.cells.Resize(0, 0)
 	t.TPuts(ti.ShowCursor)
 	t.TPuts(ti.AttrOff)
@@ -395,12 +397,12 @@ func (t *tScreen) Fini() {
 	t.curstyle = Style(-1)
 	t.clear = false
 	t.fini = true
-	t.Unlock()
 
 	if t.quit != nil {
 		close(t.quit)
+		t.quit = nil
 	}
-	t.termioFini()
+	return t.termioFini()
 }
 
 func (t *tScreen) SetStyle(style Style) {
@@ -1298,6 +1300,10 @@ func (t *tScreen) mainLoop() {
 
 func (t *tScreen) inputLoop() {
 
+	t.inputLoopWrapped()
+}
+
+func (t *tScreen) inputLoopWrapped() {
 	for {
 		chunk := make([]byte, 128)
 		n, e := t.in.Read(chunk)
@@ -1306,7 +1312,7 @@ func (t *tScreen) inputLoop() {
 		case nil:
 		default:
 			t.PostEvent(NewEventError(e))
-			return
+			continue
 		}
 		t.keychan <- chunk[:n]
 	}

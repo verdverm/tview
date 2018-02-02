@@ -21,6 +21,8 @@ import (
 	"os/signal"
 	"syscall"
 	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 type termiosPrivate syscall.Termios
@@ -79,15 +81,21 @@ func (t *tScreen) termioInit() error {
 
 failed:
 	if t.in != nil {
-		t.in.Close()
+		err := t.in.Close()
+		if err != nil {
+			return errors.Wrapf(err, "in tScreen_bsd.termioInit() t.in.Close()")
+		}
 	}
 	if t.out != nil {
-		t.out.Close()
+		err := t.out.Close()
+		if err != nil {
+			return errors.Wrapf(err, "in tScreen_bsd.termioInit() t.out.Close()")
+		}
 	}
 	return e
 }
 
-func (t *tScreen) termioFini() {
+func (t *tScreen) termioFini() error {
 
 	signal.Stop(t.sigwinch)
 
@@ -98,11 +106,18 @@ func (t *tScreen) termioFini() {
 		ioc := uintptr(syscall.TIOCSETAF)
 		tios := uintptr(unsafe.Pointer(t.tiosp))
 		syscall.Syscall6(syscall.SYS_IOCTL, fd, ioc, tios, 0, 0, 0)
-		t.out.Close()
+		err := t.out.Close()
+		if err != nil {
+			return errors.Wrapf(err, "in tScreen_bsd.termioFini() t.out.Close()")
+		}
 	}
 	if t.in != nil {
-		t.in.Close()
+		err := t.in.Close()
+		if err != nil {
+			return errors.Wrapf(err, "in tScreen_bsd.termioFini() t.in.Close()")
+		}
 	}
+	return nil
 }
 
 func (t *tScreen) getWinSize() (int, int, error) {
